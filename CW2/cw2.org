@@ -8,10 +8,15 @@
 #+LATEX_HEADER: \usepackage{float}
 #+LATEX_HEADER: \usepackage{siunitx}
 
-* Wprowadzenie
+* Treść ćwiczenia
 
-Celem ćwiczenia jest zaprojektowanie bazującego na jednym typie przerzutników (w naszym przypadku przerzutników typu T) oraz dowolnych bramkach logicznych
-czterobitowego licznika działającego zgodnie z ciągiem Fibonacciego, gdzie wartość 1 pojawia się tylko raz w cyklu. Aktualna wartość wskazywana przez licznik powinna być widoczna na wyświetlaczach siedmiosegmentowych.
+Korzystając tylko z konkretnego jednego typu przerzutników oraz z dowolnych bramek logicznych, proszę zaprojektować czterobitowy licznik działający zgodnie z ciągiem Fibonacciego (z nieobowiązkowym upraszczającym zastrzeżeniem, że wartość "1" powinna się pojawiać tylko raz w cyklu). Po uruchomieniu licznika, w kolejnych taktach zegara powinien on zatem przechodzić po wartościach: 
+
+\bigskip
+ 0, 1, 2, 3, 5, 8, 13, 0, 1, 2, 3, 5, 8, 13, 0, 1, … itd.
+\bigskip
+ 
+Aktualna wartość wskazywana przez licznik powinna być widoczna na wyświetlaczach siedmiosegmentowych.
 
 \bigskip
 
@@ -32,111 +37,140 @@ cyklu zegara, funkcje $T_0, T_1, T_2, T_3$ wówczas, przez prostą konwersję pi
 #+ATTR_LATEX: :placement [H]
 #+caption: Tabela prawdy dla funkcji $T_0, T_1, T_2, T_3$
 |-----+-----+-----+-----+---+------+------+------+------|
-| $A$ | $B$ | $C$ | $D$ |   | $T_0$ | $T_1$ | $T_2$ | $T_3$ |
+| $Q^{(n-1)}_0$ | $Q^{(n-1)}_1$    | $Q^{(n-1)}_2$    | $Q^{(n-1)}_3$    |   | $T_0$ | $T_1$ | $T_2$ | $T_3$ |
 |-----+-----+-----+-----+---+------+------+------+------|
-|   0 |   0 |   0 |   0 |   |    1 |    0 |    0 |    0 |
-|   0 |   0 |   0 |   1 |   |    1 |    0 |    1 |    0 |
-|   0 |   0 |   1 |   0 |   |    1 |    0 |    1 |    1 |
-|   0 |   0 |   1 |   1 |   |    1 |    0 |    1 |    1 |
-|   0 |   1 |   0 |   0 |   |    1 |    0 |    0 |    0 |
-|   0 |   1 |   0 |   1 |   |    1 |    0 |    1 |    0 |
-|   0 |   1 |   1 |   0 |   |    1 |    0 |    1 |    1 |
-|   0 |   1 |   1 |   1 |   |    1 |    0 |    1 |    1 |
-|   1 |   0 |   0 |   0 |   |    1 |    1 |    0 |    0 |
-|   1 |   0 |   0 |   1 |   |    1 |    1 |    1 |    0 |
-|   1 |   0 |   1 |   0 |   |    1 |    0 |    1 |    1 |
-|   1 |   0 |   1 |   1 |   |    1 |    0 |    1 |    1 |
-|   1 |   1 |   0 |   0 |   |    0 |    1 |    1 |    0 |
-|   1 |   1 |   0 |   1 |   |    0 |    1 |    1 |    0 |
-|   1 |   1 |   1 |   0 |   |    0 |    0 |    1 |    1 |
-|   1 |   1 |   1 |   1 |   |    0 |    0 |    1 |    1 |
+|   0 |   0 |   0 |   0 |   |    0 |    0 |    0 |    1 |
+|   0 |   0 |   0 |   1 |   |    0 |    0 |    1 |    1 |
+|   0 |   0 |   1 |   0 |   |    0 |    0 |    0 |    1 |
+|   0 |   0 |   1 |   1 |   |    0 |    1 |    1 |    0 |
+|   0 |   1 |   0 |   0 |   |    x |    x |    x |    x |
+|   0 |   1 |   0 |   1 |   |    1 |    1 |    0 |    1 |
+|   0 |   1 |   1 |   0 |   |    x |    x |    x |    x |
+|   0 |   1 |   1 |   1 |   |    x |    x |    x |    x |
+|   1 |   0 |   0 |   0 |   |    0 |    1 |    0 |    1 |
+|   1 |   0 |   0 |   1 |   |    x |    x |    x |    x |
+|   1 |   0 |   1 |   0 |   |    x |    x |    x |    x |
+|   1 |   0 |   1 |   1 |   |    x |    x |    x |    x |
+|   1 |   1 |   0 |   0 |   |    x |    x |    x |    x |
+|   1 |   1 |   0 |   1 |   |    1 |    1 |    0 |    1 |
+|   1 |   1 |   1 |   0 |   |    x |    x |    x |    x |
+|   1 |   1 |   1 |   1 |   |    x |    x |    x |    x |
 |-----+-----+-----+-----+---+------+------+------+------|
 
 Podukład ~decoder~ natomiast, przyjmuje 4 bitową liczbę binarną i zwraca dwie 4-bitowe liczby których wartości są cyframi liczby z zakresu 0-19 w systemie dziesiętnym.
 
 \bigskip
 
-Podukład ten traktować możemy jako układ którego sygnałami wyjściowymi jest 8 czteroarguentowych funkcji zdaniowych $Q_0, Q_1, \ldots, Q_7$
-(gdzie funkcje $Q_0, \ldots, Q_3$ odpowiadają liczbie dziesiątek, a $Q_4, \ldots, Q_7$ liczbie jedności) przyjmujących poniższe wartości:
+Podukład ten traktować możemy jako układ którego sygnałami wyjściowymi jest 8 czteroarguentowych funkcji zdaniowych ($D_0, D_1, D_2, D_3$ dla liczby dziesiątek i $J_0, J_1, J_2, J_3$ dla liczby jedności)
+przyjmujących poniższe wartości:
 
 #+ATTR_LATEX: :align |c|c|c|c|c|c|c|c|c|c|c|c|c|
 #+ATTR_LATEX: :placement [H]
-#+caption: Tabela prawdy dla funkcji $Q_0, Q_1, \ldots, Q_7$
-|-----+-----+-----+-----+---+------+------+------+------+------+------+------+------|
-| $A$ | $B$ | $C$ | $D$ |   | $Q_0$ | $Q_1$ | $Q_2$ | $Q_3$ | $Q_4$ | $Q_5$ | $Q_6$ | $Q_7$ |
-|-----+-----+-----+-----+---+------+------+------+------+------+------+------+------|
-|   0 |   0 |   0 |   0 |   |    0 |    0 |    0 |    0 |    0 |    0 |    0 |    0 |
-|   0 |   0 |   0 |   1 |   |    0 |    0 |    0 |    0 |    1 |    0 |    0 |    0 |
-|   0 |   0 |   1 |   0 |   |    0 |    0 |    0 |    0 |    0 |    1 |    0 |    0 |
-|   0 |   0 |   1 |   1 |   |    0 |    0 |    0 |    0 |    1 |    1 |    0 |    0 |
-|   0 |   1 |   0 |   0 |   |    0 |    0 |    0 |    0 |    0 |    0 |    1 |    0 |
-|   0 |   1 |   0 |   1 |   |    0 |    0 |    0 |    0 |    1 |    0 |    1 |    0 |
-|   0 |   1 |   1 |   0 |   |    0 |    0 |    0 |    0 |    0 |    1 |    1 |    0 |
-|   0 |   1 |   1 |   1 |   |    0 |    0 |    0 |    0 |    1 |    1 |    1 |    0 |
-|   1 |   0 |   0 |   0 |   |    0 |    0 |    0 |    0 |    0 |    0 |    0 |    1 |
-|   1 |   0 |   0 |   1 |   |    0 |    0 |    0 |    0 |    1 |    0 |    0 |    1 |
-|   1 |   0 |   1 |   0 |   |    1 |    1 |    1 |    1 |    0 |    0 |    0 |    0 |
-|   1 |   0 |   1 |   1 |   |    1 |    1 |    1 |    1 |    1 |    0 |    0 |    0 |
-|   1 |   1 |   0 |   0 |   |    1 |    1 |    1 |    1 |    0 |    1 |    0 |    0 |
-|   1 |   1 |   0 |   1 |   |    1 |    1 |    1 |    1 |    1 |    1 |    0 |    0 |
-|   1 |   1 |   1 |   0 |   |    1 |    1 |    1 |    1 |    0 |    0 |    1 |    0 |
-|   1 |   1 |   1 |   1 |   |    1 |    1 |    1 |    1 |    1 |    0 |    1 |    0 |
-|-----+-----+-----+-----+---+------+------+------+------+------+------+------+------|
+#+caption: Tabela prawdy dla sygnałów wyjściowych podukładu ~decoder~
+|------+------+------+------+---+------+------+------+------+------+------+------+------|
+| $Q_3$ | $Q_2$ | $Q_1$ | $Q_0$ |   | $D_0$ | $D_1$ | $D_2$ | $D_3$ | $J_0$ | $J_1$ | $J_2$ | $J_3$ |
+|------+------+------+------+---+------+------+------+------+------+------+------+------|
+|    0 |    0 |    0 |    0 |   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
+|    0 |    0 |    0 |    1 |   | 0    | 0    | 0    | 0    | 1    | 0    | 0    | 0    |
+|    0 |    0 |    1 |    0 |   | 0    | 0    | 0    | 0    | 0    | 1    | 0    | 0    |
+|    0 |    0 |    1 |    1 |   | 0    | 0    | 0    | 0    | 1    | 1    | 0    | 0    |
+|    0 |    1 |    0 |    0 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    0 |    1 |    0 |    1 |   | 0    | 0    | 0    | 0    | 1    | 0    | 1    | 0    |
+|    0 |    1 |    1 |    0 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    0 |    1 |    1 |    1 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    1 |    0 |    0 |    0 |   | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 1    |
+|    1 |    0 |    0 |    1 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    1 |    0 |    1 |    0 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    1 |    0 |    1 |    1 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    1 |    1 |    0 |    0 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    1 |    1 |    0 |    1 |   | 1    | 0    | 0    | 0    | 1    | 0    | 0    | 0    |
+|    1 |    1 |    1 |    0 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|    1 |    1 |    1 |    1 |   | x    | x    | x    | x    | x    | x    | x    | x    |
+|------+------+------+------+---+------+------+------+------+------+------+------+------|
 
-Aby zaprojektować licznik, pozostaje zatem zminimalizować metodą tablic Karnaugh odpowiednio funkcje $T_0, T_1, T_2, T_3$ (dla podukładu ~blackbox~) oraz $Q_0, Q_1, \ldots, Q_7$ (dla podukładu ~decoder~) a następnie zbudować go wraz ze stanowiskiem testowym w programie ~Multisim~.
+Aby zaprojektować licznik, pozostaje zatem zminimalizować metodą tablic Karnaugh odpowiednio funkcje $T_0, T_1, T_2, T_3$ (dla podukładu ~blackbox~) oraz $D_0, D_1, \ldots, J_3$ (dla podukładu ~decoder~) a następnie zbudować go wraz ze stanowiskiem testowym w programie ~Multisim~.
 
 * Minimalizacja funkcji zdaniowych
 
 ** Podukład ~blackbox~
 
-Funkcje $T_1, T_2, T_3$ oraz $T_4$ z Tabeli 1. minimalizują poniższe tablice Karnaugh:
+Funkcje $T_1, T_2, T_3$ oraz $T_4$ z Tabeli 1. minimalizują poniższe tablice Karnaugh (Oznaczenia $A, B, C, D$ odpowiadają argumentom funkcji $Q_0, Q_1, Q_2, Q_3$):
 
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 200px
 #+caption: Tablica Karnaugh dla funkcji $T_0$
-[[file:screeny/t0_kmap.png]]
+[[file:screeny/t0_kmap.jpg]]
 
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 300px
+#+caption: Bramka obliczająca wartości funkcji $T_0$
+[[file:screeny/t0.png]]
+
+#+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 200px
 #+caption: Tablica Karnaugh dla funkcji $T_1$
 [[file:screeny/t1_kmap.png]]
 
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 300px
+#+caption: Bramka obliczająca wartości funkcji $T_1$
+[[file:screeny/t1.png]]
+
+#+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 200px
 #+caption: Tablica Karnaugh dla funkcji $T_2$
 [[file:screeny/t2_kmap.png]]
 
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 300px
+#+caption: Bramka obliczająca wartości funkcji $T_2$
+[[file:screeny/t2.png]]
+
+#+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 200px
 #+caption: Tablica Karnaugh dla funkcji $T_3$
 [[file:screeny/t3_kmap.png]]
+
+#+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 300px
+#+caption: Bramka obliczająca wartości funkcji $T_3$
+[[file:screeny/t3.png]]
+
 
 ** Podukład ~decoder~
 
 Z Tabeli 2. jak również z faktu, że interesuje na wyłącznie konwersja na liczby dziesiętne mniejsze od 20, obserwujemy trywialne uproszczenie:
 \begin{equation}
-Q_0 = Q_1 = Q_2 = Q_3
+D_1 = D_2 = D_3 = 0
 \end{equation}
 
 #+ATTR_LATEX: :placement [H]
-#+caption: Tablica Karnaugh dla funkcji $Q_0, \ldots, Q_3$
+#+caption: Tablica Karnaugh dla funkcji $D_0$
 [[file:screeny/q0_kmap.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+caption: Tablica Karnaugh dla funkcji $Q_4$
+#+caption: Tablica Karnaugh dla funkcji $J_0$
 [[file:screeny/q4_kmap.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+caption: Tablica Karnaugh dla funkcji $Q_5$
+#+caption: Tablica Karnaugh dla funkcji $J_1$
 [[file:screeny/q5_kmap.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+caption: Tablica Karnaugh dla funkcji $Q_6$
+#+caption: Tablica Karnaugh dla funkcji $J_2$
 [[file:screeny/q6_kmap.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+caption: Tablica Karnaugh dla funkcji $Q_7$
+#+caption: Tablica Karnaugh dla funkcji $J_3$
 [[file:screeny/q7_kmap.png]]
+
+#+ATTR_LATEX: :placement [H]
+#+caption: Bramka obliczająca wartości funkcji $J_0, \ldots, J_3$ (na rysunku $Q_0, \ldots, Q_3$)
+[[file:screeny/jednosci.png]]
 
 * Schemat układu
 
-W oparciu o wyprowadzone na rysunkach 2-10 wzory na sygnały wyjściowe, oraz poczynione we wprowadzeniu założenia możemy stworzyć schemat licznika w programie ~Multisim~.
+W oparciu o wyprowadzone wzory na sygnały wyjściowe, oraz poczynione we wprowadzeniu założenia możemy stworzyć schemat licznika w programie ~Multisim~.
 
 Nasz licznik wzbogacamy dotatkowo o wejście dla sygnału resetującego, które podpinamy bezpośrednio do przerzutników typu T, co będzie przydatne podczas projektowania stanowiska testującego.
 
@@ -145,32 +179,9 @@ Nasz licznik wzbogacamy dotatkowo o wejście dla sygnału resetującego, które 
 [[file:screeny/blackbox.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+caption: Schemat podukładu ~blackbox~ z dodanym wejściem dla sygnału resetującego
-[[file:screeny/blackbox2.png]]
-
-#+ATTR_LATEX: :placement [H]
-#+caption: Bramka obliczająca wartości funkcji $T_0$
-[[file:screeny/t0.png]]
-
-#+ATTR_LATEX: :placement [H]
-#+caption: Bramka obliczająca wartości funkcji $T_1$
-[[file:screeny/t1.png]]
-
-#+ATTR_LATEX: :placement [H]
-#+caption: Bramka obliczająca wartości funkcji $T_2$
-[[file:screeny/t2.png]]
-
-#+ATTR_LATEX: :placement [H]
-#+caption: Bramka obliczająca wartości funkcji $T_3$
-[[file:screeny/t3.png]]
-
-#+ATTR_LATEX: :placement [H]
-#+caption: Schemat podukładu ~decoder~ (na rysunku $D_0, \ldots D_3$ odpowiada $Q_0, \ldots, Q_3$ natomiast $J_0, \ldots, J_3$ $Q_4, \ldots, Q_7$)
+#+caption: Schemat podukładu ~decoder~
 [[file:screeny/decoder.png]]
 
-#+ATTR_LATEX: :placement [H]
-#+caption: Bramka obliczająca wartości funkcji $Q_4, \ldots, Q_7$ (na rysunku $Q_0, \ldots, Q_3$)
-[[file:screeny/jednosci.png]]
 
 * Stanowisko testujące
 
