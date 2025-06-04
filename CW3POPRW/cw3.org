@@ -6,6 +6,7 @@
 #+LATEX_HEADER: \usepackage[margin=1cm]{geometry}
 #+LATEX_HEADER: \usepackage{float}
 #+LATEX_HEADER: \usepackage{siunitx}
+#+LATEX_HEADER: \usepackage{multicol}
 
 * Treść ćwiczenia
 
@@ -55,7 +56,7 @@ Powyższy układ zaprojektować można jako automat Mealy'ego $\langle Z, Q, Y, 
 
 Gdzie:
 - $Z = \{P, S, N, PR, 0\}$, gdzie 0 oznacza stan niski na wszystkich wejściach
-- $Y = 2^{\text{Out}}$, gdzie $\text{Out} = \{R_0, R_1, ST\}$
+- $Y = 2^{\text{Out}}$, gdzie$\text{Out} = \{R_0, R_1, ST\}$
 - $Q = 2^{\text{State}}$, gdzie $\text{State} = \text{Out} \cup \{CN, CPR\}$
 - $q_0 = 00000$
 
@@ -596,12 +597,53 @@ Lub też, dokładniej, biorąc pod uwagę przypadki brzegowe, tabela prawdy:
 * Minimalizacja funkcji stanu
 
 Poniższe zminimalizowane wyprowadzenia otrzymaliśmy z wykorzystaniem biblioteki ~LogicMin~ w języku ~Python~ wykorzystującą wewnętrznie
-metodę Quine'a-McCluskeya, będącą, pod kątęm teoretycznym, równoważną metodzie tablic Karnaugh.
+metodę Quine'a-McCluskeya, będącą, pod kątęm teoretycznym, równoważną metodzie tablic Karnaugh:
+#+begin_src python
+  import pandas
+  import logicmin
+  from collections import defaultdict
 
-Wszystkie otrzymane wyniki przed implementacją w programie ~Multisim~ zaimplementowaliśmy i przetestowaliśmy programistycznie w języku ~Python~.
+  conflict_check = defaultdict(set)
+  
+  df = pandas.read_csv("./truth_table3.csv", sep = ';')
+
+  t = logicmin.TT(9, 5)
+
+  mp3_input = df.iloc[:, 0:9].to_numpy().tolist()
+  mp3_output = df.iloc[:, 9:14].to_numpy().tolist()
+
+  mi = ["".join(str(el) for el in element) for element in mp3_input]
+  mo = ["".join(str(el) for el in element) for element in mp3_output]
+
+  for i in range(len(mi)):
+      t.add(mi[i], mo[i])
+
+  for i in range(len(mi)):
+      conflict_check[mi[i]].add(mo[i])
+
+  for inp, out_set in conflict_check.items():
+      if len(out_set) > 1:
+          print(f"⚠️ Konflikt dla wejścia {inp}: {out_set}")
+
+sols = t.solve()
+
+print(sols.printN(xnames= ['R1','R0','ST','CN','CPR','S', 'P', 'N', 'PR'],
+                  ynames = ["R1'", "R0'", "ST'", "CN'","CPR'"]))
+#+end_src
+
+Wszystkie otrzymane wyniki przed implementacją w programie ~Multisim~ zaimplementowaliśmy i przetestowaliśmy programistycznie w języku ~Python~:
+#+begin_src python
+  def NOT(x): return 0 if x else 1
+  def AND(*args): return int(all(args))
+  def OR(*args): return int(any(args))
+
+  def simulate_fsm_from_string(input_string):
+      ...
+#+end_src
 
 ** $ST$
 
+#+LATEX: \begin{multicols}{2}
 \begin{equation}
 \begin{split}
 ST^{(n+1)} & = (CPR)^{(n)}\overline{N}\,\overline{(PR)}\\
@@ -612,19 +654,32 @@ ST^{(n+1)} & = (CPR)^{(n)}\overline{N}\,\overline{(PR)}\\
 \end{split}
 \end{equation}
 
+Kod symulujący funkcję stanu $ST$:
+#+begin_src python
+  ST_ = OR(
+      AND(CPR, NOT(N), NOT(PR)),
+      AND(CN, CPR, NOT(PR)),
+      AND(CN, NOT(N)),
+      AND(ST, NOT(P)),
+      S
+  )
+#+end_src
+#+LATEX: \end{multicols}
+
+
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.4\textwidth
 #+caption: Podukład ~FP ST~
 [[file:screeny/fp_st.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.4\textwidth
 #+caption: Podukład ~HANDLE ST~
 [[file:screeny/handle_st.png]]
 
-
 ** $CPR$
 
+#+LATEX: \begin{multicols}{2}
 \begin{equation}
 \begin{split}
 CPR^{(n+1)} & = \overline{(CN)^{(n)}}\,\overline{N}(PR)\\
@@ -634,29 +689,44 @@ CPR^{(n+1)} & = \overline{(CN)^{(n)}}\,\overline{N}(PR)\\
 \end{split}
 \end{equation}
 
+Kod symulujący funkcję stanu $CPR$
+#+begin_src python
+  CPR_ = OR(
+      AND(NOT(CN), NOT(N), PR),
+      AND(NOT(CN), CPR, N),
+      AND(CN, N, PR),
+      AND(CN, CPR, NOT(N))
+  )
+#+end_src
+#+LATEX: \end{multicols}
+
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.4\textwidth
 #+caption: Podukład ~FP CPR~
 [[file:screeny/fp_cpr.png]]
 
+
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.4\textwidth
 #+caption: Podukład ~HANDLE CPR~
 [[file:screeny/handle_cpr.png]]
 
 
 ** $CN$
-
 \begin{equation}
 CN^{(n+1)} = N
 \end{equation}
 
+Kod symulujący funkcję stanu $CN$: ~CN_ = N~
+
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 0.4\textwidth
 #+caption: Podukład ~HANDLE CN~
 [[file:screeny/handle_cn.png]]
 
+#+LATEX: \pagebreak
 ** $R_0$
-
+#+LATEX: \begin{multicols}{2}
 \begin{equation}
 \begin{split}
 R^{(n+1)}_0 & = \overline{R^{(n)}_0} \,\overline{N}\,\overline{(PR)}(CPR)^{(n)} \\
@@ -670,26 +740,45 @@ R^{(n+1)}_0 & = \overline{R^{(n)}_0} \,\overline{N}\,\overline{(PR)}(CPR)^{(n)} 
 \end{split}
 \end{equation}
 
+Kod symulujący funkcję stanu $R_0$
+#+begin_src python
+  R0_ = OR(
+      AND(NOT(R0), CPR, NOT(N), NOT(PR)),
+      AND(NOT(R0), CN, CPR, NOT(PR)),
+      AND(NOT(R0), CN, NOT(N)),
+      AND(R0, NOT(CN), NOT(CPR)),
+      AND(R0, NOT(CN), PR),
+      AND(R0, NOT(CN), N),
+      AND(R0, NOT(CPR), N),
+      AND(R0, N, PR)
+  )
+#+end_src
+#+LATEX: \end{multicols}
+
+
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~FP R0~
 [[file:screeny/fp_r0.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~R0 SIMPLIFY~
 [[file:screeny/r0_simplify.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~NOT R0~
 [[file:screeny/not_r0.png]]
 
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~HANDLE R0~
 [[file:screeny/handle_r0.png]]
 
 ** $R_1$
 
+#+LATEX: \begin{multicols}{2}
 \begin{equation}
 \begin{split}
 R^{(n+1)}_1 & = \overline{R^{(n)}_1} \,\overline{R^{(n)}_0}\,\overline{(CN)^{(n)}}(CPR)^{(n)}\overline{N}\,\overline{(PR)}\\
@@ -704,22 +793,39 @@ R^{(n+1)}_1 & = \overline{R^{(n)}_1} \,\overline{R^{(n)}_0}\,\overline{(CN)^{(n)
 \end{split}
 \end{equation}
 
+Kod symulujący funkcję stanu $R_1$
+#+begin_src python
+  R1_ = OR(
+      AND(NOT(R1), NOT(R0), NOT(CN), CPR, NOT(N), NOT(PR)),
+      AND(NOT(R1), NOT(R0), CN, CPR, N, NOT(PR)),
+      AND(NOT(R1), R0, CN, NOT(N)),
+      AND(R1, NOT(R0), CN, NOT(N)),
+      AND(R1, NOT(R0), NOT(CPR)),
+      AND(R1, NOT(R0), PR),
+      AND(R1, NOT(CN), N),
+      AND(R1, R0, NOT(CN)),
+      AND(R1, R0, N)
+  )
+#+end_src
+#+LATEX: \end{multicols}
 
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~FP R1~
 [[file:screeny/fp_r1.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~SIMPLIFY R1~
 [[file:screeny/simplify_r1.png]]
 
 #+ATTR_LATEX: :placement [H]
-#+ATTR_LATEX: :height 0.45\textwidth
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~SIMPLIFY NOT R1~
 [[file:screeny/simplify_not_r1.png]]
 
 #+ATTR_LATEX: :placement [H]
+#+ATTR_LATEX: :height 0.5\textwidth
 #+caption: Podukład ~HANDLE R1~
 [[file:screeny/handle_r1.png]]
 
